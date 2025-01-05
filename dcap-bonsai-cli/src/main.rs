@@ -4,7 +4,7 @@ use risc0_ethereum_contracts::groth16;
 use risc0_zkvm::{
     compute_image_id, default_prover, ExecutorEnv, InnerReceipt::Groth16, ProverOpts,
 };
-use std::fs::read_to_string;
+use std::fs::{read, write};
 use std::path::PathBuf;
 
 use dcap_bonsai_cli::chain::{
@@ -216,6 +216,9 @@ async fn main() -> Result<()> {
             println!("Journal: {}", hex::encode(&output));
             println!("seal: {}", hex::encode(&seal));
 
+            write("sgx_verification_journal.bin", &output)?;
+            write("sgx_verification_seal.bin", &seal)?;
+
             // Send the calldata to Ethereum.
             log::info!("Submitting proofs to on-chain DCAP contract to be verified...");
             let calldata = generate_attestation_calldata(&output, &seal);
@@ -287,16 +290,12 @@ fn get_quote(path: &Option<PathBuf>, hex: &Option<String>) -> Result<Vec<u8>> {
         }
         _ => match path {
             Some(p) => {
-                let quote_string = read_to_string(p).expect(error_msg);
-                let processed = remove_prefix_if_found(&quote_string);
-                let quote_hex = hex::decode(processed)?;
+                let quote_hex = read(p).expect(error_msg);
                 Ok(quote_hex)
             }
             _ => {
                 let default_path = PathBuf::from(DEFAULT_QUOTE_PATH);
-                let quote_string = read_to_string(default_path).expect(error_msg);
-                let processed = remove_prefix_if_found(&quote_string);
-                let quote_hex = hex::decode(processed)?;
+                let quote_hex = read(default_path).expect(error_msg);
                 Ok(quote_hex)
             }
         },

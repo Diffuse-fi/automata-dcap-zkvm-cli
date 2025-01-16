@@ -4,6 +4,7 @@ use risc0_ethereum_contracts::groth16;
 use risc0_zkvm::{
     compute_image_id, default_prover, ExecutorEnv, InnerReceipt::Groth16, ProverOpts,
 };
+use std::env;
 use std::fs::{read, write};
 use std::path::PathBuf;
 
@@ -224,7 +225,13 @@ async fn main() -> Result<()> {
             let calldata = generate_attestation_calldata(&output, &seal);
             log::info!("Calldata: {}", hex::encode(&calldata));
 
-            let mut tx_sender = TxSender::new(DEFAULT_RPC_URL, DEFAULT_DCAP_CONTRACT)
+            let dcap_contract_address = env::var("DCAP_ATTESTATION")
+                .expect("DCAP_ATTESTATION env var not set");
+
+            let rpc_url = env::var("RPC_URL")
+                .expect("RPC_URL env var not set");
+
+            let mut tx_sender = TxSender::new(&rpc_url, &dcap_contract_address)
                 .expect("Failed to create txSender");
 
             // staticcall to the DCAP verifier contract to verify proof
@@ -251,8 +258,7 @@ async fn main() -> Result<()> {
                         let tx_receipt = tx_sender.send(calldata.clone()).await?;
                         let hash = tx_receipt.transaction_hash;
                         println!(
-                            "See transaction at: {}/0x{}",
-                            DEFAULT_EXPLORER_URL,
+                            "See transaction at: explorer_url/0x{}",
                             hex::encode(hash.as_slice())
                         );
                     }

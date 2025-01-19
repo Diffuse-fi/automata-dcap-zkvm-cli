@@ -60,6 +60,11 @@ struct DcapArgs {
     /// Optional: A transaction will not be sent if left blank.
     #[arg(short = 'k', long = "wallet-key")]
     wallet_private_key: Option<String>,
+
+    /// Optional: don't upload to bonsai, prove locally
+    #[arg(long, default_value_t = false)]
+    local_proving: bool,
+
 }
 
 #[derive(Args)]
@@ -162,10 +167,17 @@ async fn main() -> Result<()> {
             log::info!("Image ID: {}", image_id.to_string());
 
             let input = generate_input(&quote, &serialized_collaterals);
-            println!("All collaterals found! Begin uploading input to Bonsai...");
 
-            // Set RISC0_PROVER env to bonsai
-            std::env::set_var("RISC0_PROVER", "bonsai");
+            if args.local_proving {
+                println!("All collaterals found! Begin local proving...");
+                // automatically uses bonsai if variables are set
+                std::env::remove_var("BONSAI_API_KEY");
+                std::env::remove_var("BONSAI_API_URL");
+            } else {
+                println!("All collaterals found! Begin uploading input to Bonsai...");
+                // Set RISC0_PROVER env to bonsai
+                std::env::set_var("RISC0_PROVER", "bonsai");
+            }
 
             let env = ExecutorEnv::builder().write_slice(&input).build()?;
             let receipt = default_prover()

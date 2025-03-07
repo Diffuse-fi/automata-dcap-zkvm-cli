@@ -42,7 +42,6 @@ impl TxSender {
     pub async fn send(&self, calldata: Vec<u8>) -> Result<TransactionReceipt> {
         let rpc_url = self.rpc_url.parse()?;
         let provider = ProviderBuilder::new()
-            .with_recommended_fillers()
             .wallet(&self.wallet)
             .on_http(rpc_url);
 
@@ -63,7 +62,6 @@ impl TxSender {
     pub async fn call(&self, calldata: Vec<u8>) -> Result<Bytes> {
         let rpc_url = self.rpc_url.parse()?;
         let provider = ProviderBuilder::new()
-            .with_recommended_fillers()
             .wallet(&self.wallet)
             .on_http(rpc_url);
 

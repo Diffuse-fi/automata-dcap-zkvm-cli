@@ -37,7 +37,7 @@ impl TxSender {
         let signer_key =
         SigningKey::from_slice(&hex::decode(private_key).unwrap()).expect("Invalid key");
         let wallet = EthereumWallet::from(PrivateKeySigner::from_signing_key(signer_key));
-    
+
         self.wallet = wallet;
 
         Ok(())
@@ -47,7 +47,6 @@ impl TxSender {
     pub async fn send(&self, calldata: Vec<u8>) -> Result<TransactionReceipt> {
         let rpc_url = self.rpc_url.parse()?;
         let provider = ProviderBuilder::new()
-            .with_recommended_fillers()
             .wallet(&self.wallet)
             .on_http(rpc_url);
 
@@ -68,7 +67,6 @@ impl TxSender {
     pub async fn call(&self, calldata: Vec<u8>) -> Result<Bytes> {
         let rpc_url = self.rpc_url.parse()?;
         let provider = ProviderBuilder::new()
-            .with_recommended_fillers()
             .wallet(&self.wallet)
             .on_http(rpc_url);
 
@@ -77,7 +75,7 @@ impl TxSender {
             .with_input(calldata);
 
         let call_output = provider.call(&tx).await?;
-         
+
         Ok(call_output)
     }
 }
